@@ -3,9 +3,22 @@
     "version": "1.0.0",
     "description": "Convert an object to Nbt.",
     "main": "dist/index.js",
+    "types": "dist/index.d.ts",
     "author": "Jakobg1215",
     "license": "MIT",
     "devDependencies": {
         "@types/node": "^16.11.10"
-    }
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/Jakobg1215/objecttonbt.git"
+    },
+    "keywords": [
+        "nbt",
+        "json"
+    ],
+    "bugs": {
+        "url": "https://github.com/Jakobg1215/objecttonbt/issues"
+    },
+    "homepage": "https://github.com/Jakobg1215/objecttonbt#readme"
 }
