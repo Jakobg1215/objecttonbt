@@ -1,0 +1,11 @@
+{
+    "name": "objecttonbt",
+    "version": "1.0.0",
+    "description": "Convert an object to Nbt.",
+    "main": "dist/index.js",
+    "author": "Jakobg1215",
+    "license": "MIT",
+    "devDependencies": {
+        "@types/node": "^16.11.10"
+    }
+}
