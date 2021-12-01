@@ -14,8 +14,11 @@
         "url": "git+https://github.com/Jakobg1215/objecttonbt.git"
     },
     "keywords": [
+        "converter",
+        "libaraty",
+        "typescript",
         "nbt",
-        "json"
+        "minecraft"
     ],
     "bugs": {
         "url": "https://github.com/Jakobg1215/objecttonbt/issues"

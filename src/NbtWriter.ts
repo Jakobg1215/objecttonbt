@@ -136,7 +136,7 @@ export default class NbtWriter {
     }
 
     private writeSignedInteger(integer: number): this {
-        this.bytes = Buffer.concat([this.bytes, Buffer.from(new Int32Array([integer]))]);
+        this.bytes = Buffer.concat([this.bytes, Buffer.from(new Int32Array([integer]).buffer)]);
         return this;
     }
 
