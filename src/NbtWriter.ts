@@ -1,8 +1,9 @@
 import { Buffer } from 'node:buffer';
+import { endianness } from 'node:os';
 import { TagIds } from './TagIds';
 
 export default class NbtWriter {
-    private bytes: Buffer = Buffer.alloc(0);
+    private bytes: Buffer = Buffer.allocUnsafe(0);
 
     //#region TAGS
 
@@ -14,7 +15,7 @@ export default class NbtWriter {
         if (name !== null) {
             this.writeTagType(TagIds.BYTE).writeTagName(name ?? '');
         }
-        this.bytes = Buffer.concat([this.bytes, Buffer.from(new Int8Array([byte]).buffer)]);
+        this.bytes = Buffer.concat([this.bytes, Buffer.from(Int8Array.from([byte]).buffer)]);
         return this;
     }
 
@@ -22,7 +23,9 @@ export default class NbtWriter {
         if (name !== null) {
             this.writeTagType(TagIds.SHORT).writeTagName(name ?? '');
         }
-        this.bytes = Buffer.concat([this.bytes, Buffer.from(new Int16Array([short]).buffer)]);
+        const buf: Buffer = Buffer.from(Int16Array.from([short]));
+        if (endianness() === 'LE') buf.swap16();
+        this.bytes = Buffer.concat([this.bytes, buf]);
         return this;
     }
 
@@ -30,7 +33,9 @@ export default class NbtWriter {
         if (name !== null) {
             this.writeTagType(TagIds.INT).writeTagName(name ?? '');
         }
-        this.bytes = Buffer.concat([this.bytes, Buffer.from(new Int32Array([int]).buffer)]);
+        const buf: Buffer = Buffer.from(Int32Array.from([int]).buffer);
+        if (endianness() === 'LE') buf.swap32();
+        this.bytes = Buffer.concat([this.bytes, buf]);
         return this;
     }
 
@@ -38,7 +43,9 @@ export default class NbtWriter {
         if (name !== null) {
             this.writeTagType(TagIds.LONG).writeTagName(name ?? '');
         }
-        this.bytes = Buffer.concat([this.bytes, Buffer.from(new BigInt64Array([long]).buffer)]);
+        const buf: Buffer = Buffer.from(BigInt64Array.from([long]).buffer);
+        if (endianness() === 'LE') buf.swap64();
+        this.bytes = Buffer.concat([this.bytes, buf]);
         return this;
     }
 
@@ -46,7 +53,9 @@ export default class NbtWriter {
         if (name !== null) {
             this.writeTagType(TagIds.FLOAT).writeTagName(name ?? '');
         }
-        this.bytes = Buffer.concat([this.bytes, Buffer.from(new Float32Array([float]).buffer)]);
+        const buf: Buffer = Buffer.from(Float32Array.from([float]).buffer);
+        if (endianness() === 'LE') buf.swap32();
+        this.bytes = Buffer.concat([this.bytes, buf]);
         return this;
     }
 
@@ -54,9 +63,9 @@ export default class NbtWriter {
         if (name !== null) {
             this.writeTagType(TagIds.DOUBLE).writeTagName(name ?? '');
         }
-        const tagData = Buffer.alloc(8);
-        tagData.writeDoubleBE(double);
-        this.bytes = Buffer.concat([this.bytes, Buffer.from(new Float64Array([double]).buffer)]);
+        const buf: Buffer = Buffer.from(Float64Array.from([double]).buffer);
+        if (endianness() === 'LE') buf.swap64();
+        this.bytes = Buffer.concat([this.bytes, buf]);
         return this;
     }
 
@@ -65,15 +74,15 @@ export default class NbtWriter {
             this.writeTagType(TagIds.BYTEARRAY).writeTagName(name ?? '');
         }
         this.writeSignedInteger(bytes.length);
-        this.bytes = Buffer.concat([this.bytes, Buffer.from(new Int8Array(bytes).buffer)]);
+        this.bytes = Buffer.concat([this.bytes, Buffer.from(Int8Array.from(bytes).buffer)]);
         return this;
     }
 
-    public writeTagString(string: string, name?: string | null): this {
+    public writeTagString(text: string, name?: string | null): this {
         if (name !== null) {
             this.writeTagType(TagIds.STRING).writeTagName(name ?? '');
         }
-        return this.writeUnsignedShort(string.length).writeString(string);
+        return this.writeUnsignedShort(text.length).writeString(text);
     }
 
     public writeTagList(type: TagIds, length: number, name?: string | null): this {
@@ -95,7 +104,9 @@ export default class NbtWriter {
             this.writeTagType(TagIds.INTARRAY).writeTagName(name ?? '');
         }
         this.writeSignedInteger(ints.length);
-        this.bytes = Buffer.concat([this.bytes, Buffer.from(new Int32Array(ints).buffer)]);
+        const buf: Buffer = Buffer.from(Int32Array.from(ints).buffer);
+        if (endianness() === 'LE') buf.swap32();
+        this.bytes = Buffer.concat([this.bytes, buf]);
         return this;
     }
 
@@ -104,7 +115,9 @@ export default class NbtWriter {
             this.writeTagType(TagIds.LONGARRAY).writeTagName(name ?? '');
         }
         this.writeSignedInteger(longs.length);
-        this.bytes = Buffer.concat([this.bytes, Buffer.from(new BigInt64Array(longs).buffer)]);
+        const buf: Buffer = Buffer.from(BigInt64Array.from(longs).buffer);
+        if (endianness() === 'LE') buf.swap64();
+        this.bytes = Buffer.concat([this.bytes, buf]);
         return this;
     }
 
@@ -126,17 +139,21 @@ export default class NbtWriter {
     }
 
     private writeUnsignedByte(byte: number): this {
-        this.bytes = Buffer.concat([this.bytes, Buffer.from(new Uint8Array([byte]).buffer)]);
+        this.bytes = Buffer.concat([this.bytes, Buffer.from(Uint8Array.from([byte]).buffer)]);
         return this;
     }
 
     private writeUnsignedShort(short: number): this {
-        this.bytes = Buffer.concat([this.bytes, Buffer.from(new Uint16Array([short]).buffer)]);
+        const buf: Buffer = Buffer.from(Uint16Array.from([short]).buffer);
+        if (endianness() === 'LE') buf.swap16();
+        this.bytes = Buffer.concat([this.bytes, buf]);
         return this;
     }
 
     private writeSignedInteger(integer: number): this {
-        this.bytes = Buffer.concat([this.bytes, Buffer.from(new Int32Array([integer]).buffer)]);
+        const buf: Buffer = Buffer.from(Int32Array.from([integer]).buffer);
+        if (endianness() === 'LE') buf.swap32();
+        this.bytes = Buffer.concat([this.bytes, buf]);
         return this;
     }
 

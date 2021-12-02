@@ -1,13 +1,13 @@
 {
     "name": "objecttonbt",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "description": "Convert an object to Nbt.",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
     "author": "Jakobg1215",
     "license": "MIT",
     "devDependencies": {
-        "@types/node": "^16.11.10"
+        "@types/node": "^16.11.11"
     },
     "repository": {
         "type": "git",
