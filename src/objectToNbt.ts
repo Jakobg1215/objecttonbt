@@ -1,318 +1,342 @@
 import type { Buffer } from 'node:buffer';
+import { isBigInt64Array, isInt32Array, isInt8Array } from 'node:util/types';
 import NbtWriter from './NbtWriter';
 import { TagIds } from './TagIds';
 
-export default function objectToNbt(data: object): Buffer {
-    const elements: [string, any][] = Object.entries(data);
-    const nbtData: NbtWriter = new NbtWriter();
+export default function objectToNbt(objectData: object): Buffer {
+    const elements = Object.entries(objectData);
+    const nbtData = new NbtWriter();
 
     nbtData.writeTagCompound();
 
-    const writeList = (data: any[], name?: string | null): void => {
-        switch (typeof data[0]) {
+    function writeList(listData: any[], listName?: string | null): void {
+        switch (typeof listData[0]) {
             case 'bigint': {
-                nbtData.writeTagList(TagIds.LONG, data.length, name);
-                data.forEach((long: bigint): void => void nbtData.writeTagLong(long, null));
+                nbtData.writeTagList(TagIds.LONG, listData.length, listName);
+                listData.forEach((element) => nbtData.writeTagLong(element, null));
                 break;
             }
 
             case 'boolean': {
-                nbtData.writeTagList(TagIds.BYTE, data.length, name);
-                data.forEach((bool: boolean): void => void nbtData.writeTagByte(bool ? 1 : 0, null));
+                nbtData.writeTagList(TagIds.BYTE, listData.length, listName);
+                listData.forEach((element) => nbtData.writeTagByte(element ? 1 : 0, null));
                 break;
             }
 
             case 'number': {
-                if (!Number.isInteger(data[0])) {
-                    nbtData.writeTagList(TagIds.FLOAT, data.length, name);
-                    data.forEach((float: number): void => void nbtData.writeTagFloat(float, null));
+                if (!Number.isInteger(listData[0])) {
+                    nbtData.writeTagList(TagIds.FLOAT, listData.length, listName);
+                    listData.forEach((element) => nbtData.writeTagFloat(element, null));
                     break;
                 }
 
-                nbtData.writeTagList(TagIds.INT, data.length, name);
-                data.forEach((int: number): void => void nbtData.writeTagInt(int, null));
+                nbtData.writeTagList(TagIds.INT, listData.length, listName);
+                listData.forEach((element) => nbtData.writeTagInt(element, null));
                 break;
             }
 
             case 'object': {
-                if (Array.isArray(data[0])) {
-                    nbtData.writeTagList(TagIds.LIST, data.length, name);
-                    data.forEach((list: any[]): void => void writeList(list, null));
-                }
-
-                if (data[0] === null) {
-                    nbtData.writeTagList(TagIds.END, 0, name);
-                    nbtData.writeTagEnd();
+                if (Array.isArray(listData[0])) {
+                    nbtData.writeTagList(TagIds.LIST, listData.length, listName);
+                    listData.forEach((element) => writeList(element, null));
                     break;
                 }
 
-                nbtData.writeTagList(TagIds.COMPOUND, data.length, name);
-                data.forEach((comp: object): void => void writeCompound(Object.entries(comp)));
+                if (listData[0] === null) {
+                    nbtData.writeTagList(TagIds.INT, listData.length, listName);
+                    listData.forEach((_element) => nbtData.writeTagInt(0, null));
+                    break;
+                }
+
+                if (isInt8Array(listData[0])) {
+                    nbtData.writeTagList(TagIds.BYTEARRAY, listData.length, listName);
+                    listData.forEach((element) => nbtData.writeTagByteArray(element, null));
+                    break;
+                }
+
+                if (isInt32Array(listData[0])) {
+                    nbtData.writeTagList(TagIds.INTARRAY, listData.length, listName);
+                    listData.forEach((element) => nbtData.writeTagIntArray(element, null));
+                    break;
+                }
+
+                if (isBigInt64Array(listData[0])) {
+                    nbtData.writeTagList(TagIds.LONGARRAY, listData.length, listName);
+                    listData.forEach((element) => nbtData.writeTagLongArray(element, null));
+                    break;
+                }
+
+                nbtData.writeTagList(TagIds.COMPOUND, listData.length, listName);
+                listData.forEach((element) => {
+                    nbtData.writeTagCompound();
+                    writeCompound(element);
+                });
                 break;
             }
 
             case 'string': {
-                if (data[0].slice(-1).match(/[bslfd]/)) {
-                    if (data[0].slice(0, -1).match(/^[0-9.-]*$/)) {
-                        switch (data[0].slice(-1)) {
+                if (listData[0].match(/^[bslfd]/)) {
+                    if (listData[0].slice(1).match(/^[0-9.-]*$/)) {
+                        switch (listData[0].slice(0, 1)) {
                             case 'b': {
-                                nbtData.writeTagList(TagIds.BYTE, data.length, name);
-                                data.forEach((byte: number): void => void nbtData.writeTagByte(byte, null));
+                                nbtData.writeTagList(TagIds.BYTE, listData.length, listName);
+                                listData.forEach((element) => nbtData.writeTagByte(parseInt(element.slice(1)), null));
                                 break;
                             }
 
                             case 's': {
-                                nbtData.writeTagList(TagIds.SHORT, data.length, name);
-                                data.forEach((short: number): void => void nbtData.writeTagShort(short, null));
+                                nbtData.writeTagList(TagIds.SHORT, listData.length, listName);
+                                listData.forEach((element) => nbtData.writeTagShort(parseInt(element.slice(1)), null));
                                 break;
                             }
 
                             case 'l': {
-                                nbtData.writeTagList(TagIds.LONG, data.length, name);
-                                data.forEach((long: bigint): void => void nbtData.writeTagLong(long, null));
+                                nbtData.writeTagList(TagIds.LONG, listData.length, listName);
+                                listData.forEach((element) => nbtData.writeTagLong(BigInt(element.slice(1)), null));
                                 break;
                             }
 
                             case 'f': {
-                                nbtData.writeTagList(TagIds.FLOAT, data.length, name);
-                                data.forEach((float: number): void => void nbtData.writeTagFloat(float, null));
+                                nbtData.writeTagList(TagIds.FLOAT, listData.length, listName);
+                                listData.forEach((element) =>
+                                    nbtData.writeTagFloat(parseFloat(element.slice(1)), null),
+                                );
                                 break;
                             }
 
                             case 'd': {
-                                nbtData.writeTagList(TagIds.DOUBLE, data.length, name);
-                                data.forEach((double: number): void => void nbtData.writeTagDouble(double, null));
+                                nbtData.writeTagList(TagIds.DOUBLE, listData.length, listName);
+                                listData.forEach((element) =>
+                                    nbtData.writeTagDouble(parseFloat(element.slice(1)), null),
+                                );
                                 break;
                             }
+
+                            default: {
+                                nbtData.writeTagList(TagIds.INT, listData.length, listName);
+                                listData.forEach((_element) => nbtData.writeTagInt(0, null));
+                            }
                         }
-                        break;
                     }
                 }
-
-                if (data[0] === ':BA:') {
-                    nbtData.writeTagByteArray(data.slice(1), null);
-                    break;
-                }
-
-                if (data[0] === ':IA:') {
-                    nbtData.writeTagIntArray(data.slice(1), null);
-                    break;
-                }
-
-                if (data[0] === ':LA:') {
-                    nbtData.writeTagLongArray(data.slice(1), null);
-                    break;
-                }
-
-                nbtData.writeTagList(TagIds.STRING, data.length, name);
-                data.forEach((string: string): void => void nbtData.writeTagString(string, null));
+                nbtData.writeTagList(TagIds.STRING, listData.length, listName);
+                listData.forEach((element) => nbtData.writeTagString(element, null));
                 break;
             }
 
             default: {
-                nbtData.writeTagList(TagIds.END, 0, name);
-                nbtData.writeTagEnd();
+                nbtData.writeTagList(TagIds.INT, listData.length, listName);
+                listData.forEach((_element) => nbtData.writeTagInt(0, null));
+                break;
             }
         }
-    };
+    }
 
-    const writeCompound = (data: [string, any][]): void => {
-        data.forEach(([elementName, elementData]: [string, any]) => {
-            switch (typeof elementData) {
+    function writeCompound(compoundData: object): void {
+        const compoundElements = Object.entries(compoundData);
+
+        for (const [name, data] of compoundElements) {
+            switch (typeof data) {
                 case 'bigint': {
-                    nbtData.writeTagLong(elementData, elementName);
+                    nbtData.writeTagLong(data, name);
                     break;
                 }
 
                 case 'boolean': {
-                    nbtData.writeTagByte(elementData ? 1 : 0, elementName);
+                    nbtData.writeTagByte(data ? 1 : 0, name);
                     break;
                 }
 
                 case 'number': {
-                    if (!Number.isInteger(elementData)) {
-                        nbtData.writeTagFloat(elementData, elementName);
+                    if (!Number.isInteger(data)) {
+                        nbtData.writeTagFloat(data, name);
                         break;
                     }
-                    nbtData.writeTagInt(elementData, elementName);
+
+                    nbtData.writeTagInt(data, name);
                     break;
                 }
 
                 case 'object': {
-                    if (Array.isArray(elementData)) {
-                        if (elementData[0] === ':BA:') {
-                            nbtData.writeTagByteArray(elementData.slice(1), elementName);
-                            break;
-                        }
-
-                        if (elementData[0] === ':IA:') {
-                            nbtData.writeTagIntArray(elementData.slice(1), elementName);
-                            break;
-                        }
-
-                        if (elementData[0] === ':LA:') {
-                            nbtData.writeTagLongArray(elementData.slice(1), elementName);
-                            break;
-                        }
-
-                        writeList(elementData, elementName);
+                    if (Array.isArray(data)) {
+                        writeList(data, name);
                         break;
                     }
 
-                    if (elementData === null) {
-                        nbtData.writeTagInt(0, elementName);
+                    if (data === null) {
+                        nbtData.writeTagInt(0, name);
                         break;
                     }
 
-                    nbtData.writeTagCompound(elementName);
-                    writeCompound(Object.entries(elementData));
+                    if (isInt8Array(data)) {
+                        nbtData.writeTagByteArray(data, name);
+                        break;
+                    }
+
+                    if (isInt32Array(data)) {
+                        nbtData.writeTagIntArray(data, name);
+                        break;
+                    }
+
+                    if (isBigInt64Array(data)) {
+                        nbtData.writeTagLongArray(data, name);
+                        break;
+                    }
+
+                    nbtData.writeTagCompound(name);
+                    writeCompound(data);
+
                     break;
                 }
 
                 case 'string': {
-                    if (elementData.slice(-1).match(/[bslfd]/)) {
-                        if (elementData.slice(0, -1).match(/^[0-9.-]*$/)) {
-                            switch (elementData.slice(-1)) {
+                    if (data.match(/^[bslfd]/)) {
+                        if (data.slice(1).match(/^[0-9.-]*$/)) {
+                            switch (data.slice(0, 1)) {
                                 case 'b': {
-                                    nbtData.writeTagByte(parseInt(elementData.slice(0, -1)), elementName);
+                                    nbtData.writeTagByte(parseInt(data.slice(1)), name);
                                     break;
                                 }
 
                                 case 's': {
-                                    nbtData.writeTagShort(parseInt(elementData.slice(0, -1)), elementName);
+                                    nbtData.writeTagShort(parseInt(data.slice(1)), name);
                                     break;
                                 }
 
                                 case 'l': {
-                                    nbtData.writeTagLong(BigInt(elementData.slice(0, -1)), elementName);
+                                    nbtData.writeTagLong(BigInt(data.slice(1)), name);
                                     break;
                                 }
 
                                 case 'f': {
-                                    nbtData.writeTagFloat(parseFloat(elementData.slice(0, -1)), elementName);
+                                    nbtData.writeTagFloat(parseFloat(data.slice(1)), name);
                                     break;
                                 }
 
                                 case 'd': {
-                                    nbtData.writeTagDouble(parseFloat(elementData.slice(0, -1)), elementName);
+                                    nbtData.writeTagDouble(parseFloat(data.slice(1)), name);
                                     break;
                                 }
+
+                                default: {
+                                    nbtData.writeTagInt(0, name);
+                                }
                             }
-                            break;
                         }
                     }
-
-                    nbtData.writeTagString(elementData, elementName);
+                    nbtData.writeTagString(data, name);
                     break;
                 }
 
                 default: {
-                    nbtData.writeTagInt(0, elementName);
+                    nbtData.writeTagInt(0, name);
                     break;
                 }
             }
-        });
+        }
+    }
 
-        nbtData.writeTagEnd();
-    };
-
-    elements.forEach(([elementName, elementData]: [string, any]) => {
-        switch (typeof elementData) {
+    for (const [name, data] of elements) {
+        switch (typeof data) {
             case 'bigint': {
-                nbtData.writeTagLong(elementData, elementName);
+                nbtData.writeTagLong(data, name);
                 break;
             }
 
             case 'boolean': {
-                nbtData.writeTagByte(elementData ? 1 : 0, elementName);
+                nbtData.writeTagByte(data ? 1 : 0, name);
                 break;
             }
 
             case 'number': {
-                if (!Number.isInteger(elementData)) {
-                    nbtData.writeTagFloat(elementData, elementName);
+                if (!Number.isInteger(data)) {
+                    nbtData.writeTagFloat(data, name);
                     break;
                 }
-                nbtData.writeTagInt(elementData, elementName);
+
+                nbtData.writeTagInt(data, name);
                 break;
             }
 
             case 'object': {
-                if (Array.isArray(elementData)) {
-                    if (elementData[0] === ':BA:') {
-                        nbtData.writeTagByteArray(elementData.slice(1), elementName);
-                        break;
-                    }
-
-                    if (elementData[0] === ':IA:') {
-                        nbtData.writeTagIntArray(elementData.slice(1), elementName);
-                        break;
-                    }
-
-                    if (elementData[0] === ':LA:') {
-                        nbtData.writeTagLongArray(elementData.slice(1), elementName);
-                        break;
-                    }
-
-                    writeList(elementData, elementName);
+                if (Array.isArray(data)) {
+                    writeList(data, name);
                     break;
                 }
 
-                if (elementData === null) {
-                    nbtData.writeTagInt(0, elementName);
+                if (data === null) {
+                    nbtData.writeTagInt(0, name);
                     break;
                 }
 
-                nbtData.writeTagCompound(elementName);
-                writeCompound(Object.entries(elementData));
+                if (isInt8Array(data)) {
+                    nbtData.writeTagByteArray(data, name);
+                    break;
+                }
+
+                if (isInt32Array(data)) {
+                    nbtData.writeTagIntArray(data, name);
+                    break;
+                }
+
+                if (isBigInt64Array(data)) {
+                    nbtData.writeTagLongArray(data, name);
+                    break;
+                }
+
+                nbtData.writeTagCompound(name);
+                writeCompound(data);
+
                 break;
             }
 
             case 'string': {
-                if (elementData.slice(-1).match(/[bslfd]/)) {
-                    if (elementData.slice(0, -1).match(/^[0-9.-]*$/)) {
-                        switch (elementData.slice(-1)) {
+                if (data.match(/^[bslfd]/)) {
+                    if (data.slice(1).match(/^[0-9.-]*$/)) {
+                        switch (data.slice(0, 1)) {
                             case 'b': {
-                                nbtData.writeTagByte(parseInt(elementData.slice(0, -1)), elementName);
+                                nbtData.writeTagByte(parseInt(data.slice(1)), name);
                                 break;
                             }
 
                             case 's': {
-                                nbtData.writeTagShort(parseInt(elementData.slice(0, -1)), elementName);
+                                nbtData.writeTagShort(parseInt(data.slice(1)), name);
                                 break;
                             }
 
                             case 'l': {
-                                nbtData.writeTagLong(BigInt(elementData.slice(0, -1)), elementName);
+                                nbtData.writeTagLong(BigInt(data.slice(1)), name);
                                 break;
                             }
 
                             case 'f': {
-                                nbtData.writeTagFloat(parseFloat(elementData.slice(0, -1)), elementName);
+                                nbtData.writeTagFloat(parseFloat(data.slice(1)), name);
                                 break;
                             }
 
                             case 'd': {
-                                nbtData.writeTagDouble(parseFloat(elementData.slice(0, -1)), elementName);
+                                nbtData.writeTagDouble(parseFloat(data.slice(1)), name);
                                 break;
                             }
+
+                            default: {
+                                nbtData.writeTagInt(0, name);
+                            }
                         }
-                        break;
                     }
                 }
-
-                nbtData.writeTagString(elementData, elementName);
+                nbtData.writeTagString(data, name);
                 break;
             }
 
             default: {
-                nbtData.writeTagInt(0, elementName);
+                nbtData.writeTagInt(0, name);
                 break;
             }
         }
-    });
+    }
 
     nbtData.writeTagEnd();
 
-    return nbtData.buffer;
+    return nbtData.bytes;
 }

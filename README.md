@@ -13,12 +13,6 @@ First you must import the function to your code.
 For Javascript
 
 ```js
-const { objectToNbt } = require('objecttonbt');
-```
-
-For Typescript
-
-```ts
 import { objectToNbt } from 'objecttonbt';
 ```
 
@@ -119,7 +113,7 @@ Always make sure ever element in an array is the same type.
 
 ```js
 const byteArray = {
-    ba: [':BA:', 80, 90], // The first index of the array must be ':BA:' or it will do a normal list
+    ba: new Int8Array([35, -43, 76]),
 };
 objectToNbt(byteArray);
 ```
@@ -128,7 +122,7 @@ objectToNbt(byteArray);
 
 ```js
 const intArray = {
-    ia: [':IA:', 100, 110], // The first index of the array must be ':IA:' or it will do a normal list
+    ia: new Int32Array([-3214, 543, 7654]),
 };
 objectToNbt(intArray);
 ```
@@ -137,7 +131,7 @@ objectToNbt(intArray);
 
 ```js
 const longArray = {
-    la: [':LA:', 120, 130], // The first index of the array must be ':LA:' or it will do a normal list
+    la: new BigInt64Array([423n, -54645120n, 53453130n]),
 };
 objectToNbt(longArray);
 ```
@@ -146,4 +140,4 @@ objectToNbt(longArray);
 
 The data can only be long as the [max buffer length](https://nodejs.org/dist/latest-v17.x/docs/api/buffer.html#bufferconstantsmax_length).
 
-Functions, Symbols, null, and undefined will default to an empty nameless int. (It also might break the writing prosses)
+Functions, Symbols, null, and undefined will default to an empty nameless int.
