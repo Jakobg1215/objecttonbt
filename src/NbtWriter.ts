@@ -227,7 +227,7 @@ export default class NbtWriter {
         if (name !== null) {
             this.writeTagType(TagIds.STRING).writeTagName(name);
         }
-        return this.writeUnsignedShort(text.length).writeString(text);
+        return this.writeUnsignedShort(Buffer.byteLength(text)).writeString(text);
     }
 
     /**

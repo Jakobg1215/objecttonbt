@@ -67,39 +67,40 @@ export default function objectToNbt(objectData: object): Buffer {
                 }
 
                 nbtData.writeTagList(TagIds.COMPOUND, listData.length, listName);
-                listData.forEach((element) => {
-                    nbtData.writeTagCompound();
-                    writeCompound(element);
-                });
+                listData.forEach((element) => writeCompound(element));
                 break;
             }
 
             case 'string': {
-                if (listData[0].match(/^[bslfd]/)) {
-                    if (listData[0].slice(1).match(/^[0-9.-]*$/)) {
-                        switch (listData[0].slice(0, 1)) {
+                if (listData[0].match(/[bslfd]/)) {
+                    if (listData[0].slice(0, -1).match(/^[0-9.-]*$/)) {
+                        switch (listData[0].slice(1)) {
                             case 'b': {
                                 nbtData.writeTagList(TagIds.BYTE, listData.length, listName);
-                                listData.forEach((element) => nbtData.writeTagByte(parseInt(element.slice(1)), null));
+                                listData.forEach((element) =>
+                                    nbtData.writeTagByte(parseInt(element.slice(0, -1)), null),
+                                );
                                 break;
                             }
 
                             case 's': {
                                 nbtData.writeTagList(TagIds.SHORT, listData.length, listName);
-                                listData.forEach((element) => nbtData.writeTagShort(parseInt(element.slice(1)), null));
+                                listData.forEach((element) =>
+                                    nbtData.writeTagShort(parseInt(element.slice(0, -1)), null),
+                                );
                                 break;
                             }
 
                             case 'l': {
                                 nbtData.writeTagList(TagIds.LONG, listData.length, listName);
-                                listData.forEach((element) => nbtData.writeTagLong(BigInt(element.slice(1)), null));
+                                listData.forEach((element) => nbtData.writeTagLong(BigInt(element.slice(0, -1)), null));
                                 break;
                             }
 
                             case 'f': {
                                 nbtData.writeTagList(TagIds.FLOAT, listData.length, listName);
                                 listData.forEach((element) =>
-                                    nbtData.writeTagFloat(parseFloat(element.slice(1)), null),
+                                    nbtData.writeTagFloat(parseFloat(element.slice(0, -1)), null),
                                 );
                                 break;
                             }
@@ -107,7 +108,7 @@ export default function objectToNbt(objectData: object): Buffer {
                             case 'd': {
                                 nbtData.writeTagList(TagIds.DOUBLE, listData.length, listName);
                                 listData.forEach((element) =>
-                                    nbtData.writeTagDouble(parseFloat(element.slice(1)), null),
+                                    nbtData.writeTagDouble(parseFloat(element.slice(0, -1)), null),
                                 );
                                 break;
                             }
@@ -117,6 +118,7 @@ export default function objectToNbt(objectData: object): Buffer {
                                 listData.forEach((_element) => nbtData.writeTagInt(0, null));
                             }
                         }
+                        break;
                     }
                 }
                 nbtData.writeTagList(TagIds.STRING, listData.length, listName);
@@ -190,31 +192,31 @@ export default function objectToNbt(objectData: object): Buffer {
                 }
 
                 case 'string': {
-                    if (data.match(/^[bslfd]/)) {
-                        if (data.slice(1).match(/^[0-9.-]*$/)) {
-                            switch (data.slice(0, 1)) {
+                    if (data.match(/[bslfd]/)) {
+                        if (data.slice(0, -1).match(/^[0-9.-]*$/)) {
+                            switch (data.slice(-1)) {
                                 case 'b': {
-                                    nbtData.writeTagByte(parseInt(data.slice(1)), name);
+                                    nbtData.writeTagByte(parseInt(data.slice(0, -1)), name);
                                     break;
                                 }
 
                                 case 's': {
-                                    nbtData.writeTagShort(parseInt(data.slice(1)), name);
+                                    nbtData.writeTagShort(parseInt(data.slice(0, -1)), name);
                                     break;
                                 }
 
                                 case 'l': {
-                                    nbtData.writeTagLong(BigInt(data.slice(1)), name);
+                                    nbtData.writeTagLong(BigInt(data.slice(0, -1)), name);
                                     break;
                                 }
 
                                 case 'f': {
-                                    nbtData.writeTagFloat(parseFloat(data.slice(1)), name);
+                                    nbtData.writeTagFloat(parseFloat(data.slice(0, -1)), name);
                                     break;
                                 }
 
                                 case 'd': {
-                                    nbtData.writeTagDouble(parseFloat(data.slice(1)), name);
+                                    nbtData.writeTagDouble(parseFloat(data.slice(0, -1)), name);
                                     break;
                                 }
 
@@ -222,6 +224,7 @@ export default function objectToNbt(objectData: object): Buffer {
                                     nbtData.writeTagInt(0, name);
                                 }
                             }
+                            break;
                         }
                     }
                     nbtData.writeTagString(data, name);
@@ -234,6 +237,8 @@ export default function objectToNbt(objectData: object): Buffer {
                 }
             }
         }
+
+        nbtData.writeTagEnd();
     }
 
     for (const [name, data] of elements) {
@@ -291,31 +296,31 @@ export default function objectToNbt(objectData: object): Buffer {
             }
 
             case 'string': {
-                if (data.match(/^[bslfd]/)) {
-                    if (data.slice(1).match(/^[0-9.-]*$/)) {
-                        switch (data.slice(0, 1)) {
+                if (data.match(/[bslfd]/)) {
+                    if (data.slice(0, -1).match(/^[0-9.-]*$/)) {
+                        switch (data.slice(-1)) {
                             case 'b': {
-                                nbtData.writeTagByte(parseInt(data.slice(1)), name);
+                                nbtData.writeTagByte(parseInt(data.slice(0, -1)), name);
                                 break;
                             }
 
                             case 's': {
-                                nbtData.writeTagShort(parseInt(data.slice(1)), name);
+                                nbtData.writeTagShort(parseInt(data.slice(0, -1)), name);
                                 break;
                             }
 
                             case 'l': {
-                                nbtData.writeTagLong(BigInt(data.slice(1)), name);
+                                nbtData.writeTagLong(BigInt(data.slice(0, -1)), name);
                                 break;
                             }
 
                             case 'f': {
-                                nbtData.writeTagFloat(parseFloat(data.slice(1)), name);
+                                nbtData.writeTagFloat(parseFloat(data.slice(0, -1)), name);
                                 break;
                             }
 
                             case 'd': {
-                                nbtData.writeTagDouble(parseFloat(data.slice(1)), name);
+                                nbtData.writeTagDouble(parseFloat(data.slice(0, -1)), name);
                                 break;
                             }
 
@@ -323,6 +328,7 @@ export default function objectToNbt(objectData: object): Buffer {
                                 nbtData.writeTagInt(0, name);
                             }
                         }
+                        break;
                     }
                 }
                 nbtData.writeTagString(data, name);
